@@ -291,7 +291,8 @@ console.log(unicode.slice(0, 2));       // "A" + first half of surrogate pair (s
 console.log(unicode.slice(0, 3));       // "A𝒯" (correct)
 ```
 
-**Important Notes on Unicode:**
+#### Important Notes on Unicode
+
 - `slice()`, `substring()`, and `substr()` all work with **code units** (UTF-16), not code points
 - Emojis and some Unicode characters use 2 code units (surrogate pairs)
 - If you need to split by actual characters, consider using `Array.from(str)` or the spread operator `[...str]`
