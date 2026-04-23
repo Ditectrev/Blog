@@ -67,11 +67,16 @@ module.exports = () => {
     output,
     basePath,
     reactStrictMode: true,
+    transpilePackages: [
+      '@headlessui/react',
+      '@floating-ui/react',
+      '@floating-ui/react-dom',
+      '@floating-ui/dom',
+      '@floating-ui/core',
+      '@floating-ui/utils',
+    ],
     trailingSlash: false,
     pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
-    eslint: {
-      dirs: ['app', 'components', 'layouts', 'scripts'],
-    },
     images: {
       remotePatterns: [
         {
@@ -88,14 +93,6 @@ module.exports = () => {
           headers: securityHeaders,
         },
       ]
-    },
-    webpack: (config, options) => {
-      config.module.rules.push({
-        test: /\.svg$/,
-        use: ['@svgr/webpack'],
-      })
-
-      return config
     },
   })
 }

@@ -9,12 +9,18 @@
   "rest": 1,
   "web-development": 3,
   "web-services": 1,
-  "frontend": 2,
-  "javascript": 1,
-  "software-development": 3,
-  "css": 1,
+  "javascript": 2,
+  "node": 1,
+  "nodejs": 1,
+  "npm": 1,
+  "operating-system": 1,
+  "package-manager": 1,
+  "runtime-environment": 1,
   "android": 1,
   "androidx": 1,
   "jetifier": 1,
-  "mobile-development": 1
+  "mobile-development": 1,
+  "software-development": 3,
+  "css": 1,
+  "frontend": 2
 }

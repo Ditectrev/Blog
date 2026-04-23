@@ -1,12 +1,18 @@
 import Link from '@/components/Link'
+import NewsletterForm from '@/components/NewsletterForm'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
-import NewsletterForm from 'pliny/ui/NewsletterForm'
 
 const MAX_DISPLAY = 5
 
 export default function Home({ posts }) {
+  const newsletterConfig = (siteMetadata.newsletter || {}) as {
+    externalUrl?: string
+    emailFieldName?: string
+    hiddenFieldName?: string
+  }
+
   return (
     <>
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -83,7 +89,11 @@ export default function Home({ posts }) {
       )}
       {siteMetadata.newsletter?.provider && (
         <div className="flex items-center justify-center pt-4">
-          <NewsletterForm />
+          <NewsletterForm
+            action={newsletterConfig.externalUrl || ''}
+            emailFieldName={newsletterConfig.emailFieldName || 'EMAIL'}
+            hiddenFieldName={newsletterConfig.hiddenFieldName || ''}
+          />
         </div>
       )}
     </>
