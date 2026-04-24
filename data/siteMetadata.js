@@ -52,7 +52,11 @@ const siteMetadata = {
   newsletter: {
     // supports mailchimp, buttondown, convertkit, klaviyo, revue, emailoctopus, beehive
     // Please add your .env file and modify it according to your selection
+    // For static hosting, set MAILCHIMP_SUBSCRIBE_ENDPOINT.
     provider: 'mailchimp',
+    externalUrl: process.env.MAILCHIMP_SUBSCRIBE_ENDPOINT || '',
+    emailFieldName: 'EMAIL',
+    hiddenFieldName: process.env.MAILCHIMP_B_FIELD || '',
   },
   comments: {
     // If you want to use an analytics provider you have to add it to the

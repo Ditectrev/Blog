@@ -13,7 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci && npm run build
+      - run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          MAILCHIMP_SUBSCRIBE_ENDPOINT: ${{ vars.MAILCHIMP_SUBSCRIBE_ENDPOINT }}
+          MAILCHIMP_B_FIELD: ${{ vars.MAILCHIMP_B_FIELD }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

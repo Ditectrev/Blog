@@ -1,0 +1,619 @@
+---
+title: 'How to Add a `.npmrc` File?'
+date: '2026-05-05'
+tags: ['javascript', 'node', 'nodejs', 'npm', 'operating system', 'package manager', 'runtime environment']
+draft: false
+summary: 'Learn what a `.npmrc` file is, why it matters in Node.js projects, and how to add and use it correctly for npm configuration, private packages, and custom registries. Step-by-step guide with examples.'
+authors: ['default']
+images: ['/static/images/nodejs-npmrc.avif']
+layout: PostLayout
+---
+
+![How to Add a `.npmrc` File infographics](/static/images/nodejs-npmrc.avif)
+
+<TOCInline toc={props.toc} asDisclosure={true} />
+
+## Introduction
+
+Node.js is one of the most popular runtimes for building modern web applications—fast, flexible, and suited to both small and large projects. When working with Node.js, developers rely on **npm** (Node Package Manager) to install and manage dependencies. One important but often overlooked part of the npm ecosystem is the **`.npmrc`** file.
+
+Many developers are unsure what a `.npmrc` file is or why it matters. Even experienced engineers sometimes underuse it. This guide explains what a `.npmrc` file is, why it is useful, where to place it, and how to add and manage it step by step.
+
+You will learn:
+
+- What `.npmrc` controls
+- Where npm reads config from
+- How to set up public and private registries
+- How to handle tokens safely in local development and CI
+- How to debug common "wrong registry" or auth issues quickly
+
+## What Is a `.npmrc` File?
+
+A **`.npmrc`** file is a configuration file used by npm. It tells npm how to behave. Settings are written in a simple **key=value** format.
+
+For example, the `.npmrc` file can store:
+
+- **Registry URLs** – where to download packages from
+- **Authentication tokens** – for private or scoped registries
+- **Package scopes** – which registry to use for which scope
+- **Proxy settings** – for corporate or restricted networks
+- **Cache and save rules** – how to cache and record dependencies
+
+In short, it lets you control how npm installs and manages packages without repeating long flags in every command.
+
+The file is plain text and can be created with any editor. The leading dot (`.`) makes it a hidden file on Unix-like systems (macOS, Linux).
+
+### `.npmrc` Format Basics (Important Details)
+
+`.npmrc` uses INI-style syntax:
+
+```ini
+key=value
+```
+
+Rules worth knowing:
+
+- One setting per line
+- Comments can use `#` or `;`
+- Boolean values are typically `true` / `false`
+- Environment variables can be referenced as `${VAR_NAME}`
+- Whitespace around `=` is usually fine, but keep formatting consistent
+
+Example:
+
+```ini
+# npm public registry
+registry=https://registry.npmjs.org/
+
+; keep exact versions in package.json
+save-exact=true
+```
+
+## Quick Start (Most Common Setup)
+
+If you just want a safe, practical setup for most teams, use this:
+
+1. Create a project-level `.npmrc` next to `package.json`.
+2. Put registry rules in the file.
+3. Use environment variables for tokens.
+4. Keep secrets out of git.
+
+```ini
+registry=https://registry.npmjs.org/
+@mycompany:registry=https://registry.mycompany.com/
+//registry.mycompany.com/:_authToken=${NPM_TOKEN}
+always-auth=true
+```
+
+Then set `NPM_TOKEN` in your shell or CI, and verify:
+
+```bash
+npm config get registry
+npm whoami --registry=https://registry.mycompany.com/
+```
+
+This gives you:
+
+- Public packages from npmjs
+- Private scoped packages from your company registry
+- No hardcoded token in the repository
+
+## Why Is the `.npmrc` File Important?
+
+The `.npmrc` file becomes important as soon as you work on real projects. Common reasons to use it:
+
+### 1. Using Private Packages
+
+Many teams use private npm packages. To access them, npm needs authentication. The `.npmrc` file is where you store these credentials (preferably via environment variables, not raw tokens in the repo).
+
+### 2. Custom Registries
+
+By default, npm uses the public registry at `https://registry.npmjs.org/`. You may need a different registry—for example a company registry or a mirror. The `.npmrc` file lets you switch registries per project or per scope.
+
+### 3. Project-Level Settings
+
+Different projects may need different registries, save rules, or engine checks. A `.npmrc` in the project root applies only to that project and keeps settings next to the code.
+
+### 4. Saving Time and Reducing Errors
+
+Without `.npmrc`, you might type long `--registry` or `--save-exact` options every time. With the file in place, npm reads the settings automatically and your workflow stays consistent.
+
+## Where Can You Add a `.npmrc` File?
+
+Where you put `.npmrc` determines **scope**: who or which project is affected.
+
+### Global Level
+
+- Affects all users on the machine.
+- Usually managed by system administrators.
+- Rarely used by everyday developers.
+
+### User Level
+
+- Affects only your user account.
+- Stored in your **home directory**.
+
+**Paths:**
+
+- **macOS / Linux:** `~/.npmrc`
+- **Windows:** `C:\Users\<YourName>\.npmrc`
+
+To see the exact path npm uses, run:
+
+```bash
+npm config get userconfig
+```
+
+You can also list all config and paths with:
+
+```bash
+npm config ls -l
+```
+
+### Project Level
+
+- Affects only the project in that folder.
+- Stored in the **project root**, next to `package.json`.
+
+**Example layout:**
+
+```
+my-project/
+  package.json
+  .npmrc
+```
+
+Project-level `.npmrc` files are very common because they keep configuration versioned and shared with the team (excluding secrets).
+
+### Which Location Should You Choose?
+
+- **Personal defaults for all repos**: user-level (`~/.npmrc`)
+- **Team-shared project behavior**: project-level (`<repo>/.npmrc`)
+- **Machine-wide administration**: global-level (rare for app developers)
+
+A common pattern is:
+
+- Keep non-secret defaults in project `.npmrc`
+- Keep personal/global defaults in `~/.npmrc`
+- Inject secrets from environment variables
+
+## How to Create a `.npmrc` File Manually
+
+### Step 1: Choose the Location
+
+Decide between **user level** (all your projects) or **project level** (this repo only). For project level, open your project root in a terminal or editor.
+
+### Step 2: Create the File
+
+Create a new file named exactly **`.npmrc`** with no extra extension.
+
+**On macOS or Linux:**
+
+```bash
+touch .npmrc
+```
+
+**On Windows:**
+
+- Create a new text file.
+- Rename it to `.npmrc`.
+- Remove any `.txt` extension (you may need to enable "Show file extensions" in Explorer).
+
+### Step 3: Add Configuration
+
+Open `.npmrc` in a text editor and add one setting per line. Example:
+
+```ini
+registry=https://registry.npmjs.org/
+```
+
+Save the file. npm will read it automatically on the next command.
+
+You can also set values using npm commands (which write to config files for you):
+
+```bash
+npm config set save-exact true
+npm config set @mycompany:registry https://registry.mycompany.com/
+```
+
+Tip: if you use command-based config, confirm *where* npm wrote the value with:
+
+```bash
+npm config get userconfig
+npm config ls -l
+```
+
+## How to Let npm Create the `.npmrc` File
+
+npm can create a user-level `.npmrc` for you when you log in:
+
+```bash
+npm login
+```
+
+npm will prompt for:
+
+- Username
+- Password
+- Email
+
+After a successful login, npm creates or updates `~/.npmrc` (or your platform's user config path) and stores an authentication token. This is useful when you don't want to manage tokens manually for the default registry.
+
+If you use modern npm authentication flows (such as browser-based login), npm still writes the resulting auth configuration into your user config unless configured otherwise.
+
+## Common `.npmrc` Settings Explained
+
+### Registry URL
+
+Tells npm where to download packages:
+
+```ini
+registry=https://registry.npmjs.org/
+```
+
+### Authentication Token
+
+Used for private or authenticated registries. **Never commit real tokens to a public repo.**
+
+```ini
+//registry.npmjs.org/:_authToken=YOUR_TOKEN
+```
+
+Prefer environment variables in CI and locally:
+
+```ini
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
+```
+
+npm expands `${NPM_TOKEN}` from the environment. See the [npm blog on private modules](https://blog.npmjs.org/post/118393368555/deploying-with-npm-private-modules) and the [npmrc documentation](https://docs.npmjs.com/files/npmrc).
+
+If your token is for a custom registry, scope it to that host:
+
+```ini
+//registry.mycompany.com/:_authToken=${NPM_TOKEN}
+```
+
+### Scoped Packages
+
+Use a custom registry only for a specific scope:
+
+```ini
+@mycompany:registry=https://registry.example.com/
+```
+
+Packages whose name starts with `@mycompany` will use that registry.
+
+You can combine scope and token rules:
+
+```ini
+@mycompany:registry=https://registry.mycompany.com/
+//registry.mycompany.com/:_authToken=${NPM_TOKEN}
+always-auth=true
+```
+
+### Save Exact Versions
+
+Control how versions are written to `package.json` (e.g. exact version vs ranges):
+
+```ini
+save-exact=true
+```
+
+Or with the legacy prefix style:
+
+```ini
+save-prefix='~'
+```
+
+### Useful Additional Settings
+
+```ini
+fund=false
+audit=true
+engine-strict=true
+```
+
+- `fund=false`: hides funding messages in install output
+- `audit=true`: keeps security audit checks enabled
+- `engine-strict=true`: fails install if `engines` constraints do not match
+
+### Network and Proxy Settings (Corporate Environments)
+
+If you are behind a corporate proxy or custom TLS environment, these settings are often required:
+
+```ini
+proxy=http://proxy.mycompany.local:8080
+https-proxy=http://proxy.mycompany.local:8080
+strict-ssl=true
+```
+
+Notes:
+
+- Keep `strict-ssl=true` whenever possible for security
+- Only disable SSL verification temporarily for debugging, and only if your security policy allows it
+- In many companies, a custom CA certificate is installed at OS level; check internal docs before changing npm TLS settings
+
+### Install and Dependency Behavior Settings
+
+Useful knobs for team consistency:
+
+```ini
+save-exact=true
+legacy-peer-deps=false
+package-lock=true
+```
+
+- `save-exact=true`: pin exact versions for new installs
+- `legacy-peer-deps=false`: enforce modern peer dependency resolution
+- `package-lock=true`: keep lockfile generation enabled
+
+## How npm Reads Multiple `.npmrc` Files
+
+npm can load several config sources. Highest precedence wins:
+
+1. **CLI flags** (for example `npm install --registry=...`)
+2. **Environment variables** (`npm_config_*`)
+3. **Project level** (`<repo>/.npmrc`)
+4. **User level** (`~/.npmrc` or `npm config get userconfig`)
+5. **Global level** (system config)
+6. **Built-in npm defaults**
+
+If the same key appears in more than one file, the more specific level overrides the more general one. That gives you global defaults with the option to override per project.
+
+When debugging, this precedence explains why your `.npmrc` "looks correct" but npm still uses a different value.
+
+### Inspecting the Effective Value of a Single Key
+
+When you only care about one setting, query it directly:
+
+```bash
+npm config get registry
+npm config get save-exact
+npm config get @mycompany:registry
+```
+
+This is usually faster than scanning full config output.
+
+## Best Practices for Using `.npmrc` Files
+
+### Do Not Commit Secrets
+
+Never commit authentication tokens or passwords to a public (or shared) repository. If `.npmrc` contains secrets, add it to `.gitignore` and use a `.npmrc.example` with placeholder values.
+
+Example `.npmrc.example`:
+
+```ini
+@mycompany:registry=https://registry.mycompany.com/
+//registry.mycompany.com/:_authToken=${NPM_TOKEN}
+always-auth=true
+```
+
+### Use Environment Variables
+
+Prefer environment variables for tokens so that:
+
+- Secrets aren't in the repo.
+- CI/CD can inject different tokens per environment.
+
+Example:
+
+```ini
+//registry.example.com/:_authToken=${NPM_TOKEN}
+```
+
+### Keep It Simple
+
+Only add settings you actually need. A minimal `.npmrc` is easier to understand and maintain.
+
+### Document Your Setup
+
+If you work in a team, document why `.npmrc` exists (e.g. custom registry, scope) and how to obtain any required tokens or env vars.
+
+### Prefer Read-Only or Scoped Tokens
+
+If your registry supports token scopes/permissions, create the least-privileged token possible. For CI installs, use read-only package tokens instead of publish-capable tokens.
+
+### Rotate Tokens Regularly
+
+Treat package registry tokens like passwords:
+
+- Rotate periodically
+- Revoke immediately if exposed
+- Avoid sharing personal tokens between team members
+
+### Separate Install vs Publish Credentials
+
+If your workflow publishes packages, do not reuse broad personal tokens everywhere:
+
+- Use read-only token for installs in CI jobs
+- Use publish-capable token only in release/publish jobs
+- Restrict token scope to the minimum registry and package scope needed
+
+## Publishing Packages and `.npmrc`
+
+`.npmrc` is not only for installs. It also affects `npm publish`.
+
+For scoped packages, set your intended publish registry explicitly:
+
+```ini
+@mycompany:registry=https://registry.mycompany.com/
+```
+
+You can also set publish behavior in `package.json`:
+
+```json
+{
+  "name": "@mycompany/my-package",
+  "version": "1.0.0",
+  "publishConfig": {
+    "registry": "https://registry.mycompany.com/",
+    "access": "restricted"
+  }
+}
+```
+
+Using `publishConfig.registry` helps avoid accidental publishes to the wrong registry.
+
+## Monorepo / Workspaces Notes
+
+In npm workspaces, npm still resolves config by the same precedence rules, but in practice:
+
+- A root project `.npmrc` is usually the main shared config
+- Workspace packages inherit behavior when commands run from the repo root
+- Running commands from subdirectories can change which project config is considered current
+
+Recommended pattern for workspaces:
+
+- Keep registry/scope rules in the monorepo root `.npmrc`
+- Keep secrets in environment variables
+- Run install commands from root when possible (`npm install`, `npm ci`)
+
+## Example Team Setup
+
+Project file (`.npmrc` in repo):
+
+```ini
+registry=https://registry.npmjs.org/
+@mycompany:registry=https://registry.mycompany.com/
+//registry.mycompany.com/:_authToken=${NPM_TOKEN}
+always-auth=true
+save-exact=true
+```
+
+Git ignore:
+
+```gitignore
+# If you keep secrets in a local override file
+.npmrc.local
+```
+
+Optional local override (not committed):
+
+```ini
+# .npmrc.local
+fund=false
+```
+
+If you use a local override file, load it explicitly in your workflow or scripts. Keep the main `.npmrc` in the repo free of secrets.
+
+## CI/CD Example (GitHub Actions)
+
+In CI, inject `NPM_TOKEN` as a secret and let npm read it from `.npmrc`.
+
+```yaml
+name: Install dependencies
+on: [push]
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+This keeps credentials outside version control and centralizes secret management in your CI platform.
+
+For publish pipelines, use a separate secret (for example `NPM_PUBLISH_TOKEN`) in a dedicated job, rather than reusing install credentials.
+
+## Common Problems and How to Fix Them
+
+### Quick Debug Checklist
+
+When npm behavior is unexpected, run this short checklist in order:
+
+1. Check active registry: `npm config get registry`
+2. Check scope registry: `npm config get @mycompany:registry`
+3. Confirm auth identity: `npm whoami --registry=https://registry.mycompany.com/`
+4. Print full config sources: `npm config ls -l`
+5. Verify environment variables used in `.npmrc` are actually set
+
+This resolves most install/auth incidents quickly.
+
+### npm Seems to Ignore .npmrc
+
+Check which config npm is using:
+
+```bash
+npm config ls -l
+```
+
+Confirm the **userconfig** path and that your file is at the expected location. For project-level config, ensure the file is in the project root (same directory as `package.json`).
+
+Also check whether environment variables or CLI flags are overriding values.
+
+### Permission Errors
+
+Ensure the file is readable (and writable if npm needs to update it) by your user. On Unix-like systems, `chmod` and ownership can affect this.
+
+On Windows, also check:
+
+- File extension is truly `.npmrc` (not `.npmrc.txt`)
+- Your editor did not save with hidden extension changes
+
+### Wrong Registry Used
+
+If the wrong registry is used, another `.npmrc` may be overriding your setting. Check project, user, and global config with `npm config ls -l` and fix or remove the overriding value.
+
+Helpful checks:
+
+```bash
+npm config get registry
+npm config get @mycompany:registry
+```
+
+### 404 for a Private Package
+
+If you get "404 Not found" for a scoped or private package, verify:
+
+- The scope and registry in `.npmrc` match the package name.
+- Your token has access to that package/scope.
+- The token is not expired.
+
+### 401/403 Authentication Errors
+
+If you get `E401` or `E403`, usually:
+
+- Token is missing, invalid, or expired
+- Token is for a different registry host
+- `always-auth` behavior differs from what your registry expects
+
+Try:
+
+```bash
+npm whoami --registry=https://registry.mycompany.com/
+```
+
+If this fails, your auth setup for that registry is not valid yet.
+
+### Lockfile or Install Behavior Differs Across Machines
+
+If teammates see different versions, align on:
+
+- Node version
+- npm version
+- `.npmrc` settings such as `save-exact`
+- Use `npm ci` in CI for reproducible installs
+
+Also verify:
+
+- Lockfile is committed and up to date
+- Team uses the same package manager (`npm`, not mixed with `yarn`/`pnpm` unless intentional)
+- Proxy or mirror registry is not returning inconsistent metadata
+
+## Why `.npmrc` Matters in Real Projects
+
+In real Node.js projects, `.npmrc` helps teams share the same registry and auth setup, avoid "works on my machine" issues, and keep private package access secure. Whether you work on a small app or a large monorepo, understanding and using `.npmrc` makes installs and CI more reliable.
+
+## Recommended Node.js Learning Resources
+
+If you prefer video-based learning, the [Developing Back-End Apps with Node.js and Express (Coursera)](https://imp.i384100.net/Gb0Qa9) course offers practical Node.js + Express foundations, including APIs and authentication. For developers who prefer interactive, text-based learning, the [Learn Node.js (Educative)](https://www.educative.io/courses/learn-node-js?aff=VALz) course provides a hands-on roadmap covering APIs, databases, JWT, and WebSockets.
+
+## Conclusion
+
+The `.npmrc` file is a small but powerful way to control how npm behaves. It helps you manage registries, authentication, and project settings in a consistent and secure way. Adding and maintaining a `.npmrc` file is simple; knowing where and how to use it improves your Node.js workflow and reduces common install and auth errors.
+
