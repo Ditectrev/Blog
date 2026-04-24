@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
 const stripHtml = (value: string) =>
   value
     .replace(/<[^>]*>/g, '')
