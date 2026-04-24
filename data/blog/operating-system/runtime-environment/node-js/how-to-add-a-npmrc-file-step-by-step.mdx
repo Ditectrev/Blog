@@ -1,13 +1,15 @@
 ---
-title: 'How to Add a .npmrc File (Step-by-Step)'
+title: 'How to Add a `.npmrc` File?'
 date: '2026-05-05'
 tags: ['javascript', 'node', 'nodejs', 'npm', 'operating system', 'package manager', 'runtime environment']
 draft: false
-summary: 'Learn what a .npmrc file is, why it matters in Node.js projects, and how to add and use it correctly for npm configuration, private packages, and custom registries. Step-by-step guide with examples.'
+summary: 'Learn what a `.npmrc` file is, why it matters in Node.js projects, and how to add and use it correctly for npm configuration, private packages, and custom registries. Step-by-step guide with examples.'
 authors: ['default']
-images: ['/static/images/npmrc.avif']
+images: ['/static/images/nodejs-npmrc.avif']
 layout: PostLayout
 ---
+
+![How to Add a `.npmrc` File infographics](/static/images/nodejs-npmrc.avif)
 
 <TOCInline toc={props.toc} asDisclosure={true} />
 
@@ -25,9 +27,7 @@ You will learn:
 - How to handle tokens safely in local development and CI
 - How to debug common "wrong registry" or auth issues quickly
 
-For additional community discussion and real-world Q&A, see [How can I add a .npmrc file?](https://stackoverflow.com/questions/42877722/how-can-i-add-a-npmrc-file) on Stack Overflow.
-
-## What Is a .npmrc File?
+## What Is a `.npmrc` File?
 
 A **`.npmrc`** file is a configuration file used by npm. It tells npm how to behave. Settings are written in a simple **key=value** format.
 
@@ -98,7 +98,7 @@ This gives you:
 - Private scoped packages from your company registry
 - No hardcoded token in the repository
 
-## Why Is the .npmrc File Important?
+## Why Is the `.npmrc` File Important?
 
 The `.npmrc` file becomes important as soon as you work on real projects. Common reasons to use it:
 
@@ -118,7 +118,7 @@ Different projects may need different registries, save rules, or engine checks. 
 
 Without `.npmrc`, you might type long `--registry` or `--save-exact` options every time. With the file in place, npm reads the settings automatically and your workflow stays consistent.
 
-## Where Can You Add a .npmrc File?
+## Where Can You Add a `.npmrc` File?
 
 Where you put `.npmrc` determines **scope**: who or which project is affected.
 
@@ -177,7 +177,7 @@ A common pattern is:
 - Keep personal/global defaults in `~/.npmrc`
 - Inject secrets from environment variables
 
-## How to Create a .npmrc File Manually
+## How to Create a `.npmrc` File Manually
 
 ### Step 1: Choose the Location
 
@@ -223,7 +223,7 @@ npm config get userconfig
 npm config ls -l
 ```
 
-## How to Let npm Create the .npmrc File
+## How to Let npm Create the `.npmrc` File
 
 npm can create a user-level `.npmrc` for you when you log in:
 
@@ -241,7 +241,7 @@ After a successful login, npm creates or updates `~/.npmrc` (or your platform's 
 
 If you use modern npm authentication flows (such as browser-based login), npm still writes the resulting auth configuration into your user config unless configured otherwise.
 
-## Common .npmrc Settings Explained
+## Common `.npmrc` Settings Explained
 
 ### Registry URL
 
@@ -347,7 +347,7 @@ package-lock=true
 - `legacy-peer-deps=false`: enforce modern peer dependency resolution
 - `package-lock=true`: keep lockfile generation enabled
 
-## How npm Reads Multiple .npmrc Files
+## How npm Reads Multiple `.npmrc` Files
 
 npm can load several config sources. Highest precedence wins:
 
@@ -374,7 +374,7 @@ npm config get @mycompany:registry
 
 This is usually faster than scanning full config output.
 
-## Best Practices for Using .npmrc Files
+## Best Practices for Using `.npmrc` Files
 
 ### Do Not Commit Secrets
 
@@ -605,12 +605,15 @@ Also verify:
 - Team uses the same package manager (`npm`, not mixed with `yarn`/`pnpm` unless intentional)
 - Proxy or mirror registry is not returning inconsistent metadata
 
-## Why .npmrc Matters in Real Projects
+## Why `.npmrc` Matters in Real Projects
 
 In real Node.js projects, `.npmrc` helps teams share the same registry and auth setup, avoid "works on my machine" issues, and keep private package access secure. Whether you work on a small app or a large monorepo, understanding and using `.npmrc` makes installs and CI more reliable.
+
+## Recommended Node.js Learning Resources
+
+If you prefer video-based learning, the [Developing Back-End Apps with Node.js and Express (Coursera)](https://imp.i384100.net/Gb0Qa9) course offers practical Node.js + Express foundations, including APIs and authentication. For developers who prefer interactive, text-based learning, the [Learn Node.js (Educative)](https://www.educative.io/courses/learn-node-js?aff=VALz) course provides a hands-on roadmap covering APIs, databases, JWT, and WebSockets.
 
 ## Conclusion
 
 The `.npmrc` file is a small but powerful way to control how npm behaves. It helps you manage registries, authentication, and project settings in a consistent and secure way. Adding and maintaining a `.npmrc` file is simple; knowing where and how to use it improves your Node.js workflow and reduces common install and auth errors.
 
-For more community tips and troubleshooting, see [How can I add a .npmrc file?](https://stackoverflow.com/questions/42877722/how-can-i-add-a-npmrc-file) on Stack Overflow. With a correctly set up `.npmrc`, npm will handle configuration in the background and make your projects easier to manage.
