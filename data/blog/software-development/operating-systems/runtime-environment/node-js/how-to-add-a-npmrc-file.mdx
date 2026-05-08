@@ -197,7 +197,7 @@ touch .npmrc
 
 - Create a new text file.
 - Rename it to `.npmrc`.
-- Remove any `.txt` extension (you may need to enable "Show file extensions" in Explorer).
+- Remove any `.txt` extension (you may need to enable `Show file extensions` in Explorer).
 
 ### Step 3: Add Configuration
 
@@ -568,7 +568,7 @@ npm config get @mycompany:registry
 
 ### 404 for a Private Package
 
-If you get "404 Not found" for a scoped or private package, verify:
+If you get `404 Not found` for a scoped or private package, verify:
 
 - The scope and registry in `.npmrc` match the package name.
 - Your token has access to that package/scope.
@@ -576,7 +576,7 @@ If you get "404 Not found" for a scoped or private package, verify:
 
 ### 401/403 Authentication Errors
 
-If you get `E401` or `E403`, usually:
+If you get `401` or `403`, usually:
 
 - Token is missing, invalid, or expired
 - Token is for a different registry host
