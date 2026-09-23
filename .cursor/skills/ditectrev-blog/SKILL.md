@@ -1,6 +1,6 @@
 ---
 name: ditectrev-blog
-description: Write Ditectrev Blog MDX posts in this repo’s nested data/blog layout with SEO, GEO, AI, LLM, and chatbot-friendly structure, plus a required post graphic sourced or composited with attribution. Use when creating or updating a Ditectrev blog post, infographic, MDX article, or opening a post PR.
+description: Write Ditectrev Blog MDX posts in this repo’s nested data/blog layout with SEO, GEO, AI, LLM, and chatbot-friendly structure, a required post graphic, and Medium draft publishing on merge to main. Use when creating or updating a Ditectrev blog post, infographic, MDX article, or opening a post PR.
 ---
 
 # Ditectrev Blog Posts
@@ -34,6 +34,7 @@ Use this skill when the user asks to:
 - Make a post SEO, GEO, AI, LLM, or chatbot friendly
 - Match existing frontmatter, nested folders, tags, TOC, or “Further Learning Resources”
 - Open a PR that publishes a post
+- Cross-post a merged article to Medium as a **draft** (the GitHub Action does this; do not call Medium yourself)
 
 Do **not** use this skill for the books/courses README layout, reveal.js slides, CodeSandboxes, marketing landing pages, or edits that are only site chrome (`app/`, `layouts/`) with no post content.
 
@@ -109,6 +110,8 @@ Do not hotlink Unsplash/Wikimedia/CDN URLs in the post. Host the final graphic i
 - Educative affiliate suffix: `?aff=VALz`
 - Coursera impact host used in existing posts: `https://imp.i384100.net/...`
 - Brand logos on disk: `public/static/images/logoBlack.svg`, `logoWhite.svg`
+- Medium: drafts only (`publishStatus: draft`); live canonical is `https://blog.ditectrev.com/blog/{slug-path}`
+- GitHub Actions secret: `MEDIUM_INTEGRATION_TOKEN`
 
 Schema.org `BlogPosting` JSON-LD is already emitted from `contentlayer.config.ts` + `app/blog/[...slug]/page.tsx`. Do **not** paste a second JSON-LD block into the MDX.
 
@@ -168,8 +171,9 @@ Work in this order. **Do not generate the graphic until step 5 is answered.**
 8. **GEO/LLM pass** — first-sentence answers, FAQ, tables, key takeaways, credits.
 9. **Local check** — frontmatter, links, graphic path, `yarn lint` on touched files if JS/MDX lint applies.
 10. **Open a PR** with the MDX + AVIF (and credits). Default draft unless the user says otherwise.
+11. **Medium draft** — after the PR **merges to `main`**, `.github/workflows/medium-publish.yml` converts the new MDX and creates a Medium **draft**. Do not POST to Medium from the agent. See [Medium drafts](#medium-drafts-on-merge-to-main).
 
-When editing an existing post: keep folder + slug stable unless the user asks to move it; update `lastmod`; regenerate the graphic only if the user wants a new one (still ask what to include).
+When editing an existing post: keep folder + slug stable unless the user asks to move it; update `lastmod`; regenerate the graphic only if the user wants a new one (still ask what to include). Edits do **not** re-fire Medium (the Action only publishes **added** `data/blog/**/*.mdx` files).
 
 ## SEO, GEO, AI, LLM, and chatbot friendly writing
 
@@ -383,6 +387,75 @@ Old vs new packages → flags → scenarios (new vs existing apps) → errors an
 
 `## Further Learning Resources` — one short paragraph, then **at most** one Coursera impact link and one Educative `?aff=VALz` link when they honestly match the topic. Then `## Conclusion`. Then optional takeaways / table / `### Additional Resources` (MDN, spec, caniuse, AndroidX).
 
+## Medium drafts (on merge to main)
+
+Every **new** post that lands on `main` is also queued on Medium as a **draft**. The site remains the canonical URL. Writers publish the Medium draft by hand after reviewing formatting.
+
+### What the Action does
+
+Workflow: [`.github/workflows/medium-publish.yml`](../../../.github/workflows/medium-publish.yml)  
+Script: [`scripts/publish-medium.mjs`](../../../scripts/publish-medium.mjs)
+
+On `push` to `main` that **adds** `data/blog/**/*.mdx`:
+
+1. Diff `github.event.before` → `github.sha` with `--diff-filter=A` (new files only; edits and this skill-only PR do not publish).
+2. Skip `draft: true` posts.
+3. Convert MDX → Medium markdown:
+   - Drop YAML frontmatter (title/tags/summary are read, not pasted)
+   - Strip `<TOCInline />`, `<BlogNewsletterForm />`, `{/* … */}`, `import` lines
+   - Prepend `# {title}` (Medium’s API title does not render in the post body unless it is also in `content`)
+   - Prepend *Originally published at [live URL](live URL).*
+   - Rewrite images (see below)
+4. `POST https://api.medium.com/v1/users/{id}/posts` with:
+   - `publishStatus`: **`draft`** (never `public` / `unlisted`)
+   - `canonicalUrl`: live post URL `https://blog.ditectrev.com/blog/{nested-path}` (same as RSS `siteUrl/blog/{slug}`)
+   - `contentFormat`: `markdown`
+   - `tags`: first three frontmatter tags that are ≤ 25 characters (Medium’s cap)
+   - `notifyFollowers`: `false`
+
+Do **not** call the Medium API from the agent, duplicate-post from a laptop, or change `publishStatus` to public in the workflow.
+
+### Images for Medium
+
+Medium’s upload API accepts JPEG, PNG, GIF, and TIFF — **not** AVIF/SVG (this blog’s heroes are AVIF).
+
+The script:
+
+1. Resolves `/static/images/…` to `public/static/images/…`
+2. Converts AVIF/SVG/WebP → JPEG with `ffmpeg`
+3. `POST https://api.medium.com/v1/images` and inlines the Medium CDN URL
+4. If upload is rejected (token missing `uploadImage`), falls back to a JPEG-capable hosted URL (`wsrv.nl` for AVIF/SVG, otherwise `https://blog.ditectrev.com/static/images/…`)
+
+Keep committing **AVIF** heroes for the blog. Do not hotlink Unsplash in MDX; the Action needs a repo file to convert.
+
+### GitHub secret: `MEDIUM_INTEGRATION_TOKEN`
+
+The Action authenticates with a Medium **integration token** (self-issued access token). Store it only as a repository secret.
+
+| Piece | Value |
+| --- | --- |
+| GitHub location | Repo **Settings → Secrets and variables → Actions → New repository secret** |
+| Secret **name** | `MEDIUM_INTEGRATION_TOKEN` |
+| Secret **value** | The token string from Medium |
+| Create token | [Medium settings](https://medium.com/me/settings) → **Security and apps** → **Integration tokens** |
+| Suggested token description | `Ditectrev Blog GitHub Action` |
+
+Treat the token like a password. Never commit it, never put it in MDX, never echo it in logs. `.env.example` documents the name for local dry-runs; GitHub Actions reads the **secret**, not `.env`.
+
+If new posts merge and the secret is missing, the job **fails** with a message to add it. Empty history (`before` SHA all zeroes) is a no-op so the whole archive is not dumped to Medium.
+
+Local preview (no token, no API):
+
+```bash
+node scripts/publish-medium.mjs --dry-run --files data/blog/software-development/web-services/graphql-vs-rest.mdx
+```
+
+### Agent rules for Medium
+
+- Do not add Medium-specific HTML or a second canonical to the MDX; the Action sets Medium `canonicalUrl` to the blog URL.
+- Keep blog `tags` as they are (4–10). The Action maps them down to Medium’s three.
+- After merge, tell the user the draft is in Medium’s drafts folder for a visual check, then they publish on Medium if they want.
+
 ## Checklists
 
 ### Path / GitHub
@@ -391,6 +464,7 @@ Old vs new packages → flags → scenarios (new vs existing apps) → errors an
 - [ ] Graphic is `public/static/images/{graphic-slug}.avif` at 1400×788
 - [ ] PR includes both files (and does not add a root license or a `docs/` article tree)
 - [ ] Default branch target `main`
+- [ ] Merging to `main` will add a new `data/blog/**/*.mdx` path (so the Medium draft Action can see it)
 
 ### Frontmatter / chrome
 
@@ -424,6 +498,13 @@ Old vs new packages → flags → scenarios (new vs existing apps) → errors an
 - [ ] Further Learning Resources + Conclusion present
 - [ ] No leftover `TODO` in student-facing body unless the user asked for stubs
 
+### Medium
+
+- [ ] Repo secret `MEDIUM_INTEGRATION_TOKEN` is set (otherwise the post still ships on the blog, but the Action fails)
+- [ ] Post is `draft: false` if it should be queued on Medium
+- [ ] Live URL will be `https://blog.ditectrev.com/blog/{nested-path}` (Action `canonicalUrl`)
+- [ ] Do not set workflow `publishStatus` to anything except `draft`
+
 ## Agent operating rules
 
 - Read at least one **same-flavor** source post before writing. Prefer GraphQL vs REST for vs-guides, `.npmrc` for how-tos, CSS borders for property guides, Jetifier for migrations, JS string methods for long API comparisons.
@@ -435,3 +516,4 @@ Old vs new packages → flags → scenarios (new vs existing apps) → errors an
 - Do not change `contentlayer.config.ts` or layouts just to fit a new field; use existing fields.
 - When the user asks for “just the graphic” or “just the outline”, still keep filenames, `images:`, and headings aligned with the other artifact if it already exists.
 - Default to opening a **draft PR** on `main` with the MDX + AVIF when the user wants the post landed in GitHub.
+- Do **not** POST to `api.medium.com` from the agent. Medium drafts are created by `.github/workflows/medium-publish.yml` on merge, always as `draft`, with `canonicalUrl` = the live blog URL.

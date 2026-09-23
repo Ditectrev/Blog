@@ -1,0 +1,34 @@
+# Publish newly merged blog posts to Medium as drafts.
+# Requires repository secret MEDIUM_INTEGRATION_TOKEN (Medium integration token).
+# See .cursor/skills/ditectrev-blog/SKILL.md → Medium drafts.
+
+name: Publish new blog posts to Medium (draft)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/blog/**/*.mdx'
+
+jobs:
+  publish-medium-drafts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Publish new posts to Medium as drafts
+        env:
+          MEDIUM_INTEGRATION_TOKEN: ${{ secrets.MEDIUM_INTEGRATION_TOKEN }}
+          MEDIUM_BEFORE_SHA: ${{ github.event.before }}
+          MEDIUM_AFTER_SHA: ${{ github.sha }}
+          BLOG_SITE_URL: https://blog.ditectrev.com
+        run: node scripts/publish-medium.mjs
