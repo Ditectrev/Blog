@@ -13,12 +13,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
       - name: Build
-        run: npm run build
+        run: yarn build
         env:
+          EXPORT: 1
+          UNOPTIMIZED: 1
           MAILCHIMP_SUBSCRIBE_ENDPOINT: ${{ vars.MAILCHIMP_SUBSCRIBE_ENDPOINT }}
           MAILCHIMP_B_FIELD: ${{ vars.MAILCHIMP_B_FIELD }}
+          NEXT_PUBLIC_GISCUS_REPO: ${{ vars.NEXT_PUBLIC_GISCUS_REPO }}
+          NEXT_PUBLIC_GISCUS_REPOSITORY_ID: ${{ vars.NEXT_PUBLIC_GISCUS_REPOSITORY_ID }}
+          NEXT_PUBLIC_GISCUS_CATEGORY: ${{ vars.NEXT_PUBLIC_GISCUS_CATEGORY }}
+          NEXT_PUBLIC_GISCUS_CATEGORY_ID: ${{ vars.NEXT_PUBLIC_GISCUS_CATEGORY_ID }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
